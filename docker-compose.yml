@@ -1,0 +1,52 @@
+version: "3.8"
+
+services:
+  frontend:
+    # We target the 'deps' stage of our production Dockerfile for local development.
+    # This prevents us from having to build the entire production asset, while still
+    # getting our node_modules correctly built for the alpine architecture.
+    build:
+      context: ./frontend
+      target: deps
+    working_dir: /app
+    # Override the default command to run the Next.js development server
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount the local source code into the container for live reloading
+      - ./frontend:/app
+      # Create anonymous volumes for node_modules and .next so they are not
+      # overwritten by the host machine's directory (which might lack them or have wrong OS bindings).
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      # Fallback for file watching in Docker on certain host OS filesystems
+      - WATCHPACK_POLLING=true
+    networks:
+      - dev-network
+    depends_on:
+      - backend
+
+  backend:
+    # For local development of the Python service, we can use the slim image directly
+    # to avoid the strict production builder stage that strips out development tools.
+    image: python:3.11-slim
+    working_dir: /app
+    # Install dependencies on boot and run uvicorn with live reload enabled
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the local source code into the container for live reloading
+      - ./backend:/app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    networks:
+      - dev-network
+
+networks:
+  dev-network:
+    driver: bridge

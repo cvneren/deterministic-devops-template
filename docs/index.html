@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Production-Ready CI/CD Blueprint Metrics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              warmbg: "#F5F3EF",
+              cardbg: "#FFFFFF",
+              textmain: "#2C2A25",
+              textmuted: "#6B685F",
+              accentTeal: "#4A7A78",
+              accentRust: "#B85E53",
+              accentSand: "#D9A05B",
+              accentNavy: "#2C4251",
+            },
+            fontFamily: {
+              sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+              mono: [
+                "ui-monospace",
+                "SFMono-Regular",
+                "Menlo",
+                "Monaco",
+                "monospace",
+              ],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 350px;
+        max-height: 400px;
+      }
+
+      @media (max-width: 768px) {
+        .chart-container {
+          height: 250px;
+        }
+      }
+
+      .nav-link.active {
+        background-color: #4a7a78;
+        color: #ffffff;
+        font-weight: 600;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1;
+        border-radius: 20px;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-warmbg text-textmain font-sans antialiased overflow-y-scroll custom-scrollbar"
+  >
+    <!-- Chosen Palette: Warm Neutrals with Earthy Accents (Teal, Rust, Sand, Navy) -->
+
+    <!-- Application Structure Plan: The application uses a side-navigation dashboard layout. This structure was chosen because it allows the user to logically follow the software development lifecycle from local development (Shift Left) to remote integration (CI/CD), versioning (Conventional Commits), and finally deployment (Docker). A linear, scrollable main content area paired with sticky navigation ensures users can digest one technical pillar at a time without losing spatial awareness. The interactive charts and metric cards prioritize hard data and industry standards, fulfilling the requirement for technical justification without marketing fluff. -->
+
+    <!-- Visualization & Content Choices: 
+         1. Shift Left: Line Chart (Chart.js) -> Goal: Inform on exponential cost of bugs. Justification: Visualizes the IBM System Sciences Institute rule of thumb perfectly. Interaction: Hover for exact cost multipliers.
+         2. Conventional Commits: HTML/CSS Flow Grid -> Goal: Organize & Explain logic. Justification: Clearly maps commit prefixes to SemVer bumps without complex SVG rendering. Interaction: Hover over commit types to see resulting versions.
+         3. Strict CI/CD: Doughnut/Bar Chart combo (Chart.js) -> Goal: Compare DORA metrics (Elite vs Low performers). Justification: Stark visual contrast emphasizes the necessity of pipeline automation. Interaction: Toggle datasets.
+         4. Docker Multi-stage: Horizontal Bar Chart (Chart.js) -> Goal: Compare resource usage. Justification: Clearly shows the dramatic reduction in final image size and attack surface. Interaction: Hover to see exact megabytes.
+         Library/Method: Chart.js for data, Tailwind for structure/diagrams. Confirming NO SVG/Mermaid. -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <div class="flex flex-col md:flex-row min-h-screen">
+      <aside
+        class="w-full md:w-72 bg-cardbg shadow-md sticky top-0 md:h-screen overflow-y-auto z-20 flex-shrink-0 border-r border-gray-200"
+      >
+        <div class="p-6">
+          <div class="flex items-center gap-2 mb-2">
+            <h1 class="text-xl font-bold tracking-tight text-accentNavy">
+              CI/CD Blueprint
+            </h1>
+          </div>
+          <p class="text-sm text-textmuted mb-8 leading-relaxed">
+            Technical justifications and industry metrics for production-ready
+            engineering standards.
+          </p>
+
+          <nav
+            class="space-y-2 flex flex-row md:flex-col overflow-x-auto md:overflow-visible pb-2 md:pb-0"
+          >
+            <a
+              href="#pillar-shift-left"
+              class="nav-link block px-4 py-3 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap md:whitespace-normal"
+              data-target="pillar-shift-left"
+            >
+              Pre-commit & Shift Left
+            </a>
+            <a
+              href="#pillar-conventional"
+              class="nav-link block px-4 py-3 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap md:whitespace-normal"
+              data-target="pillar-conventional"
+            >
+              Conventional Commits
+            </a>
+            <a
+              href="#pillar-cicd"
+              class="nav-link block px-4 py-3 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap md:whitespace-normal"
+              data-target="pillar-cicd"
+            >
+              Strict CI/CD Pipelines
+            </a>
+            <a
+              href="#pillar-docker"
+              class="nav-link block px-4 py-3 rounded-lg transition-colors duration-200 text-sm whitespace-nowrap md:whitespace-normal"
+              data-target="pillar-docker"
+            >
+              Docker Multi-Stage
+            </a>
+          </nav>
+        </div>
+
+        <div class="p-6 mt-auto hidden md:block">
+          <div class="bg-warmbg p-4 rounded-lg border border-gray-200">
+            <p
+              class="text-xs text-textmuted uppercase tracking-wider font-bold mb-2"
+            >
+              Architectural Goal
+            </p>
+            <p class="text-sm text-textmain">
+              Provide measurable, standard-driven justifications for mid-level
+              and senior technical portfolios.
+            </p>
+          </div>
+        </div>
+      </aside>
+
+      <main class="flex-1 p-6 md:p-12 w-full max-w-6xl mx-auto space-y-24">
+        <section id="pillar-shift-left" class="scroll-mt-8 group">
+          <div class="mb-8">
+            <div
+              class="inline-block px-3 py-1 bg-accentTeal/10 text-accentTeal text-xs font-bold rounded-full mb-3 uppercase tracking-wide"
+            >
+              Pillar 1 : Local Development
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-accentNavy">
+              Pre-commit Hooks & "Shift Left"
+            </h2>
+            <p class="text-lg text-textmuted max-w-3xl leading-relaxed">
+              Enforcing code formatting and linting via tools like Husky and
+              Lint-staged before a commit hits the remote repository is the
+              foundation of the "Shift Left" testing philosophy. By moving
+              defect resolution as early in the lifecycle as possible, teams
+              drastically reduce costs and feedback loops.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div
+              class="bg-cardbg p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <h3 class="font-bold text-lg mb-2">Cost Mitigation</h3>
+              <p class="text-sm text-textmuted">
+                Based on the IBM Systems Sciences Institute rule, fixing a bug
+                in production is up to 100x more expensive than fixing it
+                locally. Pre-commit hooks enforce local fixes.
+              </p>
+            </div>
+            <div
+              class="bg-cardbg p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <h3 class="font-bold text-lg mb-2">Zero CI Waste</h3>
+              <p class="text-sm text-textmuted">
+                Prevents broken code or styling violations from triggering
+                costly CI builds, saving compute minutes and preventing queue
+                bottlenecks.
+              </p>
+            </div>
+            <div
+              class="bg-cardbg p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+            >
+              <h3 class="font-bold text-lg mb-2">Reviewer Sanity</h3>
+              <p class="text-sm text-textmuted">
+                Automated formatting eliminates "nitpick" comments in Pull
+                Requests regarding indentation or syntax, allowing humans to
+                review actual architecture and logic.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="bg-cardbg p-6 md:p-8 rounded-xl shadow-sm border border-gray-100"
+          >
+            <h4 class="font-bold text-center mb-6 text-accentNavy">
+              Relative Cost to Fix a Defect by Lifecycle Phase
+            </h4>
+            <div class="chart-container">
+              <canvas id="shiftLeftChart"></canvas>
+            </div>
+            <p class="text-center text-xs text-textmuted mt-4">
+              Data Model: Adapted from IBM Systems Sciences Institute / NIST
+              studies on software defect costs.
+            </p>
+          </div>
+        </section>
+
+        <hr class="border-gray-200" />
+
+        <section id="pillar-conventional" class="scroll-mt-8 group">
+          <div class="mb-8">
+            <div
+              class="inline-block px-3 py-1 bg-accentSand/10 text-accentSand text-xs font-bold rounded-full mb-3 uppercase tracking-wide"
+            >
+              Pillar 2 : Source Control
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-accentNavy">
+              Conventional Commits & SemVer
+            </h2>
+            <p class="text-lg text-textmuted max-w-3xl leading-relaxed">
+              Standardized commit messages are critical for maintaining team
+              velocity and automating the release process. By adhering to a
+              strict convention, repositories can auto-generate changelogs and
+              automatically bump Semantic Versioning (SemVer) without human
+              intervention.
+            </p>
+          </div>
+
+          <div
+            class="bg-cardbg p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 mb-8"
+          >
+            <h4 class="font-bold text-center mb-8 text-accentNavy">
+              The Automated Release Flow
+            </h4>
+
+            <div
+              class="flex flex-col md:flex-row items-center justify-between gap-4 w-full max-w-4xl mx-auto"
+            >
+              <div class="w-full md:w-1/3 space-y-3">
+                <div
+                  class="group/item relative bg-warmbg p-4 rounded-lg border border-gray-200 hover:border-accentRust cursor-pointer transition-colors"
+                  onmouseover="highlightFlow('patch')"
+                  onmouseout="resetFlow()"
+                >
+                  <div class="font-mono text-sm font-bold text-accentNavy">
+                    fix:
+                  </div>
+                  <div class="text-xs text-textmuted mt-1">
+                    Patches a bug in codebase
+                  </div>
+                </div>
+                <div
+                  class="group/item relative bg-warmbg p-4 rounded-lg border border-gray-200 hover:border-accentTeal cursor-pointer transition-colors"
+                  onmouseover="highlightFlow('minor')"
+                  onmouseout="resetFlow()"
+                >
+                  <div class="font-mono text-sm font-bold text-accentNavy">
+                    feat:
+                  </div>
+                  <div class="text-xs text-textmuted mt-1">
+                    Introduces a new feature
+                  </div>
+                </div>
+                <div
+                  class="group/item relative bg-warmbg p-4 rounded-lg border border-gray-200 hover:border-accentSand cursor-pointer transition-colors"
+                  onmouseover="highlightFlow('major')"
+                  onmouseout="resetFlow()"
+                >
+                  <div class="font-mono text-sm font-bold text-accentRust">
+                    BREAKING CHANGE:
+                  </div>
+                  <div class="text-xs text-textmuted mt-1">
+                    Modifies API contract
+                  </div>
+                </div>
+              </div>
+
+              <div class="text-2xl text-gray-300 md:-rotate-90 hidden md:block">
+                &#10549;
+              </div>
+              <div class="text-2xl text-gray-300 md:hidden">&#10515;</div>
+
+              <div
+                class="w-full md:w-1/3 bg-gray-50 p-6 rounded-xl border border-gray-200 text-center relative overflow-hidden"
+              >
+                <div
+                  class="absolute top-0 left-0 w-full h-1 bg-gray-200"
+                  id="flow-line"
+                ></div>
+                <h5 class="font-bold text-sm mb-1 text-accentNavy">
+                  CI Pipeline (Semantic-Release)
+                </h5>
+                <p class="text-xs text-textmuted">
+                  Parses commit history, determines version bump, generates
+                  release notes.
+                </p>
+              </div>
+
+              <div class="text-2xl text-gray-300 md:-rotate-90 hidden md:block">
+                &#10549;
+              </div>
+              <div class="text-2xl text-gray-300 md:hidden">&#10515;</div>
+
+              <div class="w-full md:w-1/3 space-y-3">
+                <div
+                  id="res-patch"
+                  class="flow-result bg-warmbg p-4 rounded-lg border border-gray-200 opacity-50 transition-all"
+                >
+                  <div
+                    class="font-mono text-lg font-bold text-accentNavy text-center"
+                  >
+                    v1.0.<span class="text-accentRust">X</span>
+                  </div>
+                  <div
+                    class="text-xs text-textmuted mt-1 text-center font-bold uppercase"
+                  >
+                    Patch Release
+                  </div>
+                </div>
+                <div
+                  id="res-minor"
+                  class="flow-result bg-warmbg p-4 rounded-lg border border-gray-200 opacity-50 transition-all"
+                >
+                  <div
+                    class="font-mono text-lg font-bold text-accentNavy text-center"
+                  >
+                    v1.<span class="text-accentTeal">X</span>.0
+                  </div>
+                  <div
+                    class="text-xs text-textmuted mt-1 text-center font-bold uppercase"
+                  >
+                    Minor Release
+                  </div>
+                </div>
+                <div
+                  id="res-major"
+                  class="flow-result bg-warmbg p-4 rounded-lg border border-gray-200 opacity-50 transition-all"
+                >
+                  <div
+                    class="font-mono text-lg font-bold text-accentNavy text-center"
+                  >
+                    v<span class="text-accentSand">X</span>.0.0
+                  </div>
+                  <div
+                    class="text-xs text-textmuted mt-1 text-center font-bold uppercase"
+                  >
+                    Major Release
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ul
+            class="space-y-3 text-sm text-textmain bg-cardbg p-6 rounded-xl border border-gray-100 shadow-sm"
+          >
+            <li class="flex items-start">
+              <span class="text-accentTeal mr-3 mt-0.5">&#10003;</span>
+              <span
+                ><strong>Instant History Readability:</strong> Enforces
+                discipline, allowing developers to scan git logs and instantly
+                understand the nature of changes without inspecting code
+                diffs.</span
+              >
+            </li>
+            <li class="flex items-start">
+              <span class="text-accentTeal mr-3 mt-0.5">&#10003;</span>
+              <span
+                ><strong>Eliminates Manual Versioning:</strong> Removes human
+                error and subjective decision-making from version bumping (e.g.,
+                "Is this a minor or patch?").</span
+              >
+            </li>
+            <li class="flex items-start">
+              <span class="text-accentTeal mr-3 mt-0.5">&#10003;</span>
+              <span
+                ><strong>Automated Communication:</strong> Generates highly
+                accurate `CHANGELOG.md` files automatically, keeping
+                stakeholders informed without developer overhead.</span
+              >
+            </li>
+          </ul>
+        </section>
+
+        <hr class="border-gray-200" />
+
+        <section id="pillar-cicd" class="scroll-mt-8 group">
+          <div class="mb-8">
+            <div
+              class="inline-block px-3 py-1 bg-accentRust/10 text-accentRust text-xs font-bold rounded-full mb-3 uppercase tracking-wide"
+            >
+              Pillar 3 : Automation
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-accentNavy">
+              Strict CI/CD Pipelines (GitHub Actions)
+            </h2>
+            <p class="text-lg text-textmuted max-w-3xl leading-relaxed">
+              Continuous Integration and Continuous Deployment are
+              non-negotiable for high-performing teams. Running automated
+              linting, unit tests, and builds on every Pull Request provides a
+              safety net that drastically reduces production bugs and reclaims
+              thousands of hours of developer time annually.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div
+              class="bg-cardbg p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center"
+            >
+              <h4 class="font-bold text-center mb-2 text-accentNavy">
+                Change Failure Rate
+              </h4>
+              <p class="text-xs text-textmuted text-center mb-6 max-w-xs">
+                Percentage of deployments causing a failure in production (DORA
+                Metrics).
+              </p>
+              <div class="chart-container w-full h-[250px]">
+                <canvas id="doraChart"></canvas>
+              </div>
+            </div>
+
+            <div
+              class="bg-cardbg p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col justify-center"
+            >
+              <div class="space-y-6">
+                <div>
+                  <h3 class="font-bold text-xl mb-1 flex items-center">
+                    Elite Performers
+                  </h3>
+                  <p class="text-sm text-textmuted mb-2">
+                    Teams with extensive CI/CD automation deploy on-demand
+                    (multiple times a day) with a change failure rate between 0%
+                    - 15%.
+                  </p>
+                </div>
+                <div>
+                  <h3 class="font-bold text-xl mb-1 flex items-center">
+                    Time Recovery
+                  </h3>
+                  <p class="text-sm text-textmuted mb-2">
+                    Automating testing and deployment removes manual gates.
+                    Industry consensus indicates this saves developers 3-5 hours
+                    per week per engineer, directly increasing feature
+                    throughput.
+                  </p>
+                </div>
+                <div>
+                  <h3 class="font-bold text-xl mb-1 flex items-center">
+                    Trust as a Service
+                  </h3>
+                  <p class="text-sm text-textmuted">
+                    Strict PR checks ensure the `main` branch is always in a
+                    deployable state. Reviewers can focus on business logic
+                    rather than running tests locally.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <hr class="border-gray-200" />
+
+        <section id="pillar-docker" class="scroll-mt-8 group">
+          <div class="mb-8">
+            <div
+              class="inline-block px-3 py-1 bg-accentNavy/10 text-accentNavy text-xs font-bold rounded-full mb-3 uppercase tracking-wide"
+            >
+              Pillar 4 : Deployment
+            </div>
+            <h2 class="text-3xl font-bold mb-4 text-accentNavy">
+              Docker Multi-Stage Builds
+            </h2>
+            <p class="text-lg text-textmuted max-w-3xl leading-relaxed">
+              Multi-stage builds are mandatory for modern production
+              deployments. By separating the build environment from the runtime
+              environment, organizations achieve dramatically smaller image
+              sizes, faster deployment speeds, and a minimized attack surface.
+            </p>
+          </div>
+
+          <div
+            class="bg-cardbg p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 mb-8"
+          >
+            <h4 class="font-bold text-center mb-6 text-accentNavy">
+              Node.js Production Image Size Comparison (MB)
+            </h4>
+            <div class="chart-container">
+              <canvas id="dockerChart"></canvas>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-warmbg p-5 rounded-lg border-l-4 border-accentRust">
+              <h4 class="font-bold mb-2">1. Attack Surface Reduction</h4>
+              <p class="text-sm text-textmuted">
+                Single-stage images include compilers, package managers
+                (npm/yarn), and shell tools. Multi-stage outputs (e.g.,
+                Distroless) contain *only* the compiled app and runtime,
+                stripping away tools attackers use to exploit vulnerabilities.
+              </p>
+            </div>
+            <div class="bg-warmbg p-5 rounded-lg border-l-4 border-accentTeal">
+              <h4 class="font-bold mb-2">2. Deployment Speed</h4>
+              <p class="text-sm text-textmuted">
+                A 900MB image takes significantly longer to push to registries
+                and pull to container orchestrators (like Kubernetes or ECS)
+                than an 80MB image. Smaller images enable rapid auto-scaling and
+                faster rollbacks.
+              </p>
+            </div>
+            <div class="bg-warmbg p-5 rounded-lg border-l-4 border-accentSand">
+              <h4 class="font-bold mb-2">3. Reduced Scanner Noise</h4>
+              <p class="text-sm text-textmuted">
+                Security scanners (Trivy, Snyk) often flag vulnerabilities in
+                base OS libraries or build tools that are never actually invoked
+                by the application. Multi-stage builds eliminate these false
+                positives, focusing security teams on real threats.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const updateNav = () => {
+        const sections = document.querySelectorAll("section");
+        const navLinks = document.querySelectorAll(".nav-link");
+
+        let current = "";
+        sections.forEach((section) => {
+          const sectionTop = section.offsetTop;
+          if (scrollY >= sectionTop - 150) {
+            current = section.getAttribute("id");
+          }
+        });
+
+        navLinks.forEach((link) => {
+          link.classList.remove("active");
+          if (link.getAttribute("data-target") === current) {
+            link.classList.add("active");
+          }
+        });
+      };
+
+      window.addEventListener("scroll", updateNav);
+      document.addEventListener("DOMContentLoaded", updateNav);
+
+      navLinks = document.querySelectorAll(".nav-link");
+      navLinks.forEach((link) => {
+        link.addEventListener("click", function (e) {
+          e.preventDefault();
+          const targetId = this.getAttribute("data-target");
+          document
+            .getElementById(targetId)
+            .scrollIntoView({ behavior: "smooth" });
+        });
+      });
+
+      const highlightFlow = (type) => {
+        document
+          .querySelectorAll(".flow-result")
+          .forEach((el) => el.classList.add("opacity-20"));
+        document
+          .querySelectorAll(".flow-result")
+          .forEach((el) =>
+            el.classList.remove("opacity-100", "shadow-md", "scale-105"),
+          );
+
+        const target = document.getElementById(`res-${type}`);
+        if (target) {
+          target.classList.remove("opacity-20");
+          target.classList.add(
+            "opacity-100",
+            "shadow-md",
+            "scale-105",
+            "border-current",
+          );
+
+          let color = "";
+          if (type === "patch") color = "#B85E53";
+          if (type === "minor") color = "#4A7A78";
+          if (type === "major") color = "#D9A05B";
+
+          document.getElementById("flow-line").style.backgroundColor = color;
+        }
+      };
+
+      const resetFlow = () => {
+        document.querySelectorAll(".flow-result").forEach((el) => {
+          el.classList.remove(
+            "opacity-20",
+            "opacity-100",
+            "shadow-md",
+            "scale-105",
+            "border-current",
+          );
+          el.classList.add("opacity-50");
+        });
+        document.getElementById("flow-line").style.backgroundColor = "#e5e7eb";
+      };
+
+      const initCharts = () => {
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = "#6B685F";
+        Chart.defaults.plugins.tooltip.backgroundColor = "#2C4251";
+        Chart.defaults.plugins.tooltip.padding = 12;
+        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+
+        const ctxShift = document
+          .getElementById("shiftLeftChart")
+          .getContext("2d");
+        new Chart(ctxShift, {
+          type: "line",
+          data: {
+            labels: [
+              "Requirements",
+              "Coding / Local",
+              "CI / Testing",
+              "Staging",
+              "Production",
+            ],
+            datasets: [
+              {
+                label: "Relative Cost to Fix (Multiplier)",
+                data: [1, 1, 10, 15, 100],
+                borderColor: "#B85E53",
+                backgroundColor: "rgba(184, 94, 83, 0.1)",
+                borderWidth: 3,
+                pointBackgroundColor: "#B85E53",
+                pointBorderColor: "#fff",
+                pointHoverBackgroundColor: "#fff",
+                pointHoverBorderColor: "#B85E53",
+                pointRadius: 6,
+                pointHoverRadius: 8,
+                fill: true,
+                tension: 0.4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return ` Cost Multiplier: ${context.raw}x`;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Cost Multiplier" },
+                grid: { color: "#f3f4f6" },
+              },
+              x: {
+                grid: { display: false },
+              },
+            },
+          },
+        });
+
+        const ctxDora = document.getElementById("doraChart").getContext("2d");
+        new Chart(ctxDora, {
+          type: "bar",
+          data: {
+            labels: ["Elite Performers", "Low Performers"],
+            datasets: [
+              {
+                label: "Change Failure Rate (%)",
+                data: [10, 50],
+                backgroundColor: ["#4A7A78", "#B85E53"],
+                borderRadius: 6,
+                barThickness: 50,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return ` Failure Rate: ${context.raw}%`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                beginAtZero: true,
+                max: 100,
+                title: { display: true, text: "Failure Rate (%)" },
+                grid: { color: "#f3f4f6" },
+              },
+              y: {
+                grid: { display: false },
+              },
+            },
+          },
+        });
+
+        const ctxDocker = document
+          .getElementById("dockerChart")
+          .getContext("2d");
+        new Chart(ctxDocker, {
+          type: "bar",
+          data: {
+            labels: [
+              "Standard Build (node:18)",
+              "Multi-Stage (Alpine)",
+              "Multi-Stage (Distroless)",
+            ],
+            datasets: [
+              {
+                label: "Image Size (MB)",
+                data: [990, 175, 115],
+                backgroundColor: ["#B85E53", "#D9A05B", "#4A7A78"],
+                borderRadius: 6,
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return ` Size: ~${context.raw} MB`;
+                  },
+                },
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                title: { display: true, text: "Megabytes (MB)" },
+                grid: { color: "#f3f4f6" },
+              },
+              x: {
+                grid: { display: false },
+              },
+            },
+          },
+        });
+      };
+
+      window.addEventListener("load", initCharts);
+    </script>
+  </body>
+</html>
