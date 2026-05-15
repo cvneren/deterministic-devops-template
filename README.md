@@ -1,6 +1,13 @@
 # Deterministic DevOps Template
 
 <div align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/cvneren/deterministic-devops-template/ci.yml?branch=main&label=CI/CD&style=for-the-badge" alt="CI/CD Status" />
+  <img src="https://img.shields.io/badge/Security-Trivy_Passed-success?style=for-the-badge&logo=trivy" alt="Trivy Status" />
+  <img src="https://img.shields.io/badge/Frontend-Next.js_16-black?style=for-the-badge&logo=next.js" alt="Next.js" />
+  <img src="https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Quality-Prettier_%26_ESLint-F7B93E?style=for-the-badge&logo=prettier" alt="Code Quality" />
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License" />
+  <br />
   <br />
   <a href="https://cvneren.github.io/deterministic-devops-template/docs/index.html">
     <img src="https://img.shields.io/badge/CLICK_HERE_TO_VIEW_INTERACTIVE_ARCHITECTURE_%26_DORA_METRICS_REPORT-0A66C2?style=for-the-badge" alt="View Interactive Report" />
@@ -9,11 +16,48 @@
   <br />
 </div>
 
-## Executive Summary
+## The Challenge & The Solution
 
-This repository provides a hardened, production-ready Fullstack Boilerplate. It replaces ad-hoc scripting with deterministic, strictly enforced engineering pipelines. The architecture is engineered to minimize attack surfaces, mandate automated versioning, and guarantee code quality before integration.
+### The Challenge
 
-The stack comprises a **Next.js** frontend and a **FastAPI** backend. Both services are containerized utilizing optimized Multi-Stage Dockerfiles and are governed by strict CI/CD guardrails that block unverified code from reaching the primary branch.
+Modern software development is frequently compromised by "it works on my machine" syndromes, bloated container images, and fragmented CI/CD pipelines. Security is often treated as a post-deployment afterthought, leading to unpredictable environments and containers that carry high-severity vulnerabilities into production.
+
+### The Solution
+
+This boilerplate enforces a **deterministic, zero-trust engineering environment**. By implementing strict local quality gates (Shift-Left) through Husky and lint-staged, and mandatory build-time security auditing via Trivy, this architecture ensures that code cannot be committed or built unless it is verified, formatted, and hardened against known CVEs.
+
+## Architecture & Pipeline
+
+### CI/CD Pipeline Lifecycle
+
+This project utilizes a multi-layered verification strategy to ensure that only compliant and secure code can be built.
+
+```mermaid
+graph LR
+    A[Local Git Commit] --> B[Husky & lint-staged]
+    B --> C[Commitlint Verification]
+    C --> D[GitHub Actions CI]
+    D --> E[Trivy Security Audit]
+    E --> F[Hardened Docker Build]
+```
+
+### System Architecture
+
+The application is architected as an isolated monorepo. Both services utilize Multi-Stage Docker builds to minimize runtime footprints and eliminate build-time tools (like `npm` and `pip`) from the final images.
+
+```mermaid
+flowchart TD
+    subgraph "Docker Compose Mesh"
+        subgraph "Frontend Service (Node.js 20)"
+            NextJS[Next.js 16 Standalone]
+        end
+        subgraph "Backend Service (Python 3.11)"
+            FastAPI[FastAPI / Uvicorn]
+        end
+        NextJS <-->|Internal API Calls| FastAPI
+    end
+    Client((Client Browser)) -->|Port 3000| NextJS
+```
 
 ## Getting Started
 
@@ -45,25 +89,33 @@ When creating a commit, Husky will automatically intercept the process to run Pr
 git commit -m "feat: setup initial authentication middleware"
 ```
 
-## The Four Architectural Pillars
+## Core Engineering Pillars
 
-The design of this repository is directly informed by empirical data, including DORA metrics and NIST standards. For an exhaustive, data-driven justification of these patterns, refer to the [Architecture Specification](./docs/ARCHITECTURE_SPEC.md).
+The design of this repository is informed by DORA "Elite Performer" metrics and NIST security standards. For an exhaustive, data-driven justification of these patterns, refer to the [Architecture Specification](./docs/ARCHITECTURE_SPEC.md).
 
-### 1. Shift-Left Quality Guardrails (Husky & lint-staged)
+| Pillar / Feature             | Implementation                       | Engineering Benefit                                                                                                                                                 |
+| :--------------------------- | :----------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Shift-Left Security**      | Husky & lint-staged                  | Enforces formatting, linting, and quality checks locally before commit; saves CI compute and reduces reviewer fatigue.                                              |
+| **Deterministic History**    | Conventional Commits & `@commitlint` | Mandates machine-readable history; enables automated Semantic Versioning (SemVer) and automated changelog generation.                                               |
+| **Immutable Guardrails**     | GitHub Actions & Trivy Scan          | Acts as the final gatekeeper; ensures every PR is linted, built, and scanned for CVEs before merging to `main`.                                                     |
+| **Attack Surface Reduction** | Multi-Stage Docker Builds            | Physically removes package managers (npm, pip) and build tools from production images; reduces image size by ~90% and eliminates entire classes of vulnerabilities. |
 
-Defect remediation costs increase exponentially the later a bug is caught in the Software Development Life Cycle (SDLC). By utilizing Git Hooks via **Husky** and **lint-staged**, we enforce formatting and linting directly on the developer's local machine before a commit is created. This immediate feedback loop saves remote CI compute minutes and eliminates reviewer fatigue regarding syntax errors.
+## Monorepo Structure
 
-### 2. Conventional Commits & SemVer
-
-This repository strictly enforces the [Conventional Commits](https://www.conventionalcommits.org/) specification using `@commitlint`. By mandating machine-readable commit prefixes (e.g., `feat:`, `fix:`), we guarantee a clean, deterministic git history. This convention enables the CI pipeline to automatically compute Semantic Versioning (SemVer) bumps and dynamically generate release changelogs without subjective human intervention.
-
-### 3. Strict CI/CD Integration (GitHub Actions & Trivy)
-
-Our GitHub Actions pipeline acts as the final immutable gatekeeper. Mirroring DORA "Elite Performer" standards, the pipeline automatically lints the codebase, builds the application containers, and executes security vulnerability scanning using **Trivy** on every Pull Request. The `main` branch remains protected at all times; unverified code cannot be merged.
-
-### 4. Container Minimalization (Docker Multi-Stage Builds)
-
-Single-stage Docker images inherit severe vulnerabilities by including package managers, compilers, and shell utilities in the production artifact. We utilize **Multi-Stage Dockerfiles** to strictly separate the compilation environment from the runtime environment. The final runtime artifacts copy only the built binaries (Next.js standalone output and Python wheels) into minimal Alpine or Slim images. This process reduces image sizes by up to 90% and mathematically eradicates entire classes of CVEs by minimizing the attack surface.
+```text
+.
+├── .github/workflows/      # CI/CD Pipeline definitions (GitHub Actions)
+├── .husky/                 # Git Hook configurations for Shift-Left enforcement
+├── backend/                # FastAPI (Python 3.11) Service
+│   ├── app/                # Application source code
+│   └── Dockerfile          # Multi-stage hardened production build
+├── docs/                   # Architecture & DORA metrics specifications
+├── frontend/               # Next.js 16 (TypeScript) Service
+│   ├── src/                # Application source code
+│   └── Dockerfile          # Multi-stage standalone production build
+├── docker-compose.yml      # Local development orchestration
+└── package.json            # Root dependency management & DevOps scripts
+```
 
 ## Tech Stack
 
